@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Mes Exercices</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Mulish:wght@300;400;500&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0f0f0f;--surface:#181818;--card:#1f1f1f;--border:#2a2a2a;
+  --text:#f0f0f0;--muted:#666;
+  --matin:#ffb347;--midi:#50b4ff;--soir:#a78bfa;--green:#a8ff47;
+}
+body{font-family:'Mulish',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+
+header{
+  padding:1.4rem 2.5rem;
+  display:flex;align-items:center;justify-content:space-between;gap:1rem;
+  border-bottom:1px solid var(--border);
+  position:sticky;top:0;
+  background:rgba(15,15,15,0.97);backdrop-filter:blur(10px);z-index:100;
+}
+.logo{font-family:'Syne',sans-serif;font-size:1.3rem;font-weight:800;letter-spacing:-0.02em;white-space:nowrap;}
+.logo span{color:var(--green);}
+.header-actions{display:flex;align-items:center;gap:0.5rem;}
+.add-btn{
+  background:var(--green);color:#0f0f0f;border:none;
+  padding:0.55rem 1.2rem;border-radius:100px;
+  font-family:'Syne',sans-serif;font-weight:700;font-size:0.82rem;
+  cursor:pointer;display:flex;align-items:center;gap:0.4rem;
+  transition:transform .15s,opacity .15s;
+}
+.add-btn:hover{opacity:0.85;transform:translateY(-1px);}
+.add-btn svg{width:13px;height:13px;}
+.saved-indicator{font-size:0.75rem;color:#555;display:flex;align-items:center;gap:0.4rem;transition:color .3s;}
+.saved-indicator.active{color:var(--green);}
+.saved-indicator svg{width:12px;height:12px;}
+
+/* MODAL */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);backdrop-filter:blur(4px);z-index:200;align-items:center;justify-content:center;}
+.overlay.open{display:flex;animation:fin .2s ease;}
+@keyframes fin{from{opacity:0}to{opacity:1}}
+@keyframes sup{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+
+.modal{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:2rem;width:min(520px,94vw);animation:sup .25s ease;max-height:90vh;overflow-y:auto;}
+.modal h2{font-family:'Syne',sans-serif;font-size:1.15rem;font-weight:700;margin-bottom:1.5rem;}
+.field{margin-bottom:1.1rem;}
+label{display:block;font-size:0.7rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:0.4rem;}
+input[type=text],textarea{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'Mulish',sans-serif;font-size:0.92rem;padding:0.65rem 0.9rem;outline:none;transition:border-color .2s;resize:vertical;}
+input[type=text]:focus,textarea:focus{border-color:var(--green);}
+textarea{min-height:100px;}
+.moment-selector{display:flex;gap:0.5rem;}
+.moment-opt{flex:1;padding:0.6rem;border-radius:8px;border:1px solid var(--border);background:none;color:var(--muted);cursor:pointer;font-family:'Syne',sans-serif;font-size:0.8rem;font-weight:700;transition:all .15s;text-align:center;}
+.moment-opt.sel-matin{background:rgba(255,179,71,0.15);border-color:var(--matin);color:var(--matin);}
+.moment-opt.sel-midi{background:rgba(80,180,255,0.15);border-color:var(--midi);color:var(--midi);}
+.moment-opt.sel-soir{background:rgba(167,139,250,0.15);border-color:var(--soir);color:var(--soir);}
+.modal-actions{display:flex;gap:0.7rem;justify-content:flex-end;margin-top:1.5rem;}
+.btn-cancel{background:none;border:1px solid var(--border);color:var(--muted);padding:0.55rem 1.2rem;border-radius:100px;font-family:'Mulish',sans-serif;cursor:pointer;}
+.btn-ok{background:var(--green);color:#0f0f0f;border:none;padding:0.55rem 1.4rem;border-radius:100px;font-family:'Syne',sans-serif;font-weight:700;font-size:0.85rem;cursor:pointer;}
+
+/* DETAIL MODAL */
+.detail-modal{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:2rem;width:min(560px,94vw);animation:sup .25s ease;max-height:90vh;overflow-y:auto;}
+.detail-modal h2{font-family:'Syne',sans-serif;font-size:1.3rem;font-weight:800;margin-bottom:0.4rem;}
+.detail-badge{display:inline-block;font-size:0.7rem;font-weight:700;padding:0.2rem 0.7rem;border-radius:100px;margin-bottom:1.2rem;}
+.badge-matin{background:rgba(255,179,71,0.15);color:var(--matin);}
+.badge-midi{background:rgba(80,180,255,0.15);color:var(--midi);}
+.badge-soir{background:rgba(167,139,250,0.15);color:var(--soir);}
+.detail-section{margin-bottom:1.2rem;}
+.detail-label{font-size:0.68rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:0.3rem;}
+.detail-value{font-size:0.9rem;color:#ccc;line-height:1.7;white-space:pre-wrap;}
+.detail-value.highlight{color:var(--green);font-weight:600;}
+.detail-divider{height:1px;background:var(--border);margin:1rem 0;}
+.psy-box{background:rgba(168,255,71,0.06);border:1px solid rgba(168,255,71,0.15);border-radius:8px;padding:0.8rem 1rem;font-size:0.88rem;color:var(--green);font-style:italic;text-align:center;}
+
+/* MAIN */
+main{padding:2rem 2.5rem 5rem;}
+.section{margin-bottom:3rem;}
+.section-header{display:flex;align-items:center;gap:0.8rem;margin-bottom:1.2rem;}
+.section-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+.dot-matin{background:var(--matin);}
+.dot-midi{background:var(--midi);}
+.dot-soir{background:var(--soir);}
+.section-label{font-family:'Syne',sans-serif;font-size:1rem;font-weight:800;letter-spacing:0.06em;text-transform:uppercase;}
+.lbl-matin{color:var(--matin);}
+.lbl-midi{color:var(--midi);}
+.lbl-soir{color:var(--soir);}
+.section-line{flex:1;height:1px;background:var(--border);}
+.section-count{font-size:0.75rem;color:var(--muted);}
+.section-theme{font-size:0.75rem;color:var(--muted);font-style:italic;}
+
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:1rem;}
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1.3rem;display:flex;flex-direction:column;gap:0.6rem;animation:sup .3s ease both;transition:border-color .2s,transform .2s;cursor:pointer;}
+.card:hover{transform:translateY(-3px);border-color:#3a3a3a;}
+.card-matin{border-top:2px solid var(--matin);}
+.card-midi{border-top:2px solid var(--midi);}
+.card-soir{border-top:2px solid var(--soir);}
+.card-num{font-size:0.68rem;font-weight:700;color:var(--muted);letter-spacing:0.05em;}
+.card-name{font-family:'Syne',sans-serif;font-size:0.92rem;font-weight:700;line-height:1.3;}
+.card-sets{font-size:0.75rem;font-weight:600;margin-top:auto;}
+.sets-matin{color:var(--matin);}
+.sets-midi{color:var(--midi);}
+.sets-soir{color:var(--soir);}
+.card-mat{font-size:0.72rem;color:var(--muted);}
+.card-hint{font-size:0.72rem;color:#444;margin-top:0.3rem;}
+.card-actions{display:flex;gap:0.4rem;padding-top:0.7rem;border-top:1px solid var(--border);margin-top:0.3rem;}
+.icon-btn{background:none;border:1px solid var(--border);color:var(--muted);padding:0.3rem 0.6rem;border-radius:6px;cursor:pointer;font-size:0.72rem;font-family:'Mulish',sans-serif;display:flex;align-items:center;gap:0.3rem;transition:all .15s;}
+.icon-btn:hover{border-color:#444;color:var(--text);}
+.icon-btn.del:hover{border-color:#ff4444;color:#ff4444;}
+.icon-btn svg{width:11px;height:11px;}
+.see-btn{margin-left:auto;background:none;border:1px solid var(--border);color:var(--muted);padding:0.3rem 0.7rem;border-radius:6px;cursor:pointer;font-size:0.72rem;font-family:'Mulish',sans-serif;transition:all .15s;}
+.see-btn:hover{border-color:var(--green);color:var(--green);}
+
+.empty-section{font-size:0.82rem;color:#333;padding:1.2rem;border:1px dashed #252525;border-radius:10px;text-align:center;}
+
+.toast{position:fixed;bottom:1.8rem;left:50%;transform:translateX(-50%) translateY(10px);background:#fff;color:#0f0f0f;padding:0.55rem 1.3rem;border-radius:100px;font-size:0.82rem;font-weight:700;opacity:0;transition:all .25s;pointer-events:none;z-index:999;white-space:nowrap;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+@media(max-width:600px){
+  header{padding:1rem 1.2rem;}
+  main{padding:1.5rem 1.2rem 4rem;}
+  .grid{grid-template-columns:1fr;}
+  .moment-selector{flex-direction:column;}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Mes <span>Exercices</span></div>
+  <div class="header-actions">
+    <span class="saved-indicator" id="saved-indicator">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+      Enregistré
+    </span>
+    <button class="add-btn" style="background:none;border:1px solid #333;color:#666;font-size:0.75rem;padding:0.45rem 0.9rem;" onclick="resetToDefault()">↺ Réinitialiser</button>
+    <button class="add-btn" onclick="openModal()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Ajouter
+    </button>
+  </div>
+</header>
+
+<!-- MODAL AJOUT/EDIT -->
+<div class="overlay" id="overlay" onclick="closeBg(event)">
+  <div class="modal">
+    <h2 id="modal-title">Nouvel exercice</h2>
+    <div class="field">
+      <label>Moment</label>
+      <div class="moment-selector">
+        <button class="moment-opt sel-matin" id="opt-matin" onclick="selectMoment('matin')">🌅 Matin</button>
+        <button class="moment-opt" id="opt-midi" onclick="selectMoment('midi')">☀️ Après-midi</button>
+        <button class="moment-opt" id="opt-soir" onclick="selectMoment('soir')">🌙 Soir</button>
+      </div>
+    </div>
+    <div class="field"><label>Nom</label><input type="text" id="f-name" placeholder="Nom de l'exercice…"/></div>
+    <div class="field"><label>Matériel</label><input type="text" id="f-mat" placeholder="ex: Élastique, Aucun…"/></div>
+    <div class="field"><label>Séries / Dosage</label><input type="text" id="f-sets" placeholder="ex: 3x12, tempo 2s/2s/3s…"/></div>
+    <div class="field"><label>Instructions</label><textarea id="f-desc" placeholder="Décris le geste…"></textarea></div>
+    <div class="field"><label>Sensation correcte</label><input type="text" id="f-sensation" placeholder="Ce que tu dois ressentir…"/></div>
+    <div class="field"><label>Erreur classique</label><input type="text" id="f-erreur" placeholder="Ce qu'il ne faut pas faire…"/></div>
+    <div class="field"><label>Phrase mentale 💬</label><input type="text" id="f-psy" placeholder="ex: Mon épaule s'ouvre et se libère…"/></div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal()">Annuler</button>
+      <button class="btn-ok" onclick="saveEx()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL DETAIL -->
+<div class="overlay" id="overlay-detail" onclick="closeDetailBg(event)">
+  <div class="detail-modal" id="detail-modal"></div>
+</div>
+
+<main>
+  <div class="section">
+    <div class="section-header">
+      <div class="section-dot dot-matin"></div>
+      <span class="section-label lbl-matin">🌅 Matin</span>
+      <span class="section-theme">Épaule — Mobilité + Stabilité</span>
+      <div class="section-line"></div>
+      <span class="section-count" id="count-matin"></span>
+    </div>
+    <div class="grid" id="grid-matin"></div>
+  </div>
+  <div class="section">
+    <div class="section-header">
+      <div class="section-dot dot-midi"></div>
+      <span class="section-label lbl-midi">☀️ Après-midi</span>
+      <span class="section-theme">Genoux — Décompression + Renforcement</span>
+      <div class="section-line"></div>
+      <span class="section-count" id="count-midi"></span>
+    </div>
+    <div class="grid" id="grid-midi"></div>
+  </div>
+  <div class="section">
+    <div class="section-header">
+      <div class="section-dot dot-soir"></div>
+      <span class="section-label lbl-soir">🌙 Soir</span>
+      <span class="section-theme">Épaule — Force + Stabilité Avancée</span>
+      <div class="section-line"></div>
+      <span class="section-count" id="count-soir"></span>
+    </div>
+    <div class="grid" id="grid-soir"></div>
+  </div>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const DEFAULT_EXERCISES = [
+  // ── MATIN ── Épaule : Mobilité + Stabilité Adaptée (35 min)
+  {id:1, moment:'matin', name:'Réveil Scapulaire — Version Douce', mat:'Élastique LÉGER (pas moyen), attaché à poignée de porte', sets:'2×8, tempo 2s/2s/3s, repos 90s', desc:'Position de départ : Debout à 1m de la porte, bras gauche tendu, pied droit en avant.\n\n1. Tire l\'élastique en amenant l\'omoplate vers la colonne\n2. Maintiens 2s la contraction à 50% intensité maximum\n3. Relâche très lentement\n\n⚠️ ARRÊT IMMÉDIAT si : fourmillements, épaule qui monte, tension cou', sensation:'Légère activation entre omoplates — ZÉRO fourmillement', erreur:'Dépasser 50% d\'intensité — rester dans la douceur', psy:'Mon dos contrôle, mon épaule suit doucement'},
+  {id:2, moment:'matin', name:'⭐ Décompression — Mobilisation Pendulaire', mat:'Aucun', sets:'60s gravité + 30s cercles doux × 2 sens (3 min total)', desc:'À faire entre exercice 1 et 2 — OBLIGATOIRE.\n\n1. Penche-toi en avant, bras gauche pendant libre\n2. Laisse la gravité décompresser l\'articulation 60s\n3. Petits cercles très doux 30s dans chaque sens\n\nBut : Évacuer les tensions avant l\'exercice 2', sensation:'Soulagement, décompression de l\'articulation', erreur:'Faire des cercles trop grands ou trop rapides', psy:'Mon épaule se libère par gravité'},
+  {id:3, moment:'matin', name:'⭐ Décompression — Étirement Trapèze Supérieur', mat:'Aucun', sets:'1×60s, respiration profonde', desc:'À faire entre exercice 1 et 2 — OBLIGATOIRE.\n\n1. Tête inclinée vers la droite\n2. Main droite guide doucement\n3. Maintiens 60s avec respiration profonde\n\nBut : Relâcher les compensations cervicales', sensation:'Étirement latéral doux du cou', erreur:'Tirer trop fort avec la main', psy:'Mon cou relâche toutes ses tensions'},
+  {id:4, moment:'matin', name:'Rotation Externe — Version Ultra-Douce', mat:'Élastique TRÈS LÉGER', sets:'2×10, repos 60s, amplitude réduite à 70%', desc:'Position de départ : Coude gauche collé au corps, plié à 90°.\n\n1. Amène la main vers l\'extérieur jusqu\'à 70% amplitude (pas MAX)\n2. À la fin, maintiens 2s SANS forcer\n3. Reviens lentement\n\n⛔ STOP si : moindre fourmillement', sensation:'Légère tension arrière épaule, étirement doux devant', erreur:'Aller à l\'amplitude maximale — rester à 70%', psy:'J\'ouvre l\'espace avec douceur et contrôle'},
+  {id:5, moment:'matin', name:'⭐ Récupération Active — Auto-massage Infraépineux', mat:'Aucun', sets:'1×60s mouvements circulaires doux', desc:'À faire après la rotation externe — 2 min.\n\n1. Main droite masse l\'arrière de l\'épaule gauche\n2. Mouvements circulaires très doux pendant 60s', sensation:'Relâchement arrière épaule, chaleur locale', erreur:'Appuyer trop fort — rester dans la douceur', psy:'Ma récupération est active et consciente'},
+  {id:6, moment:'matin', name:'⭐ Récupération Active — Étirement Capsule Postérieure', mat:'Aucun', sets:'1×30s seulement', desc:'À faire après l\'auto-massage infraépineux.\n\n1. Bras gauche horizontal\n2. Main droite tire le coude doucement\n3. Maintiens 30s\n\nNote : 1×30s seulement (version douce)', sensation:'Étirement profond arrière épaule', erreur:'Tirer trop fort ou trop longtemps', psy:'Mon épaule relâche ses tensions doucement'},
+  {id:7, moment:'matin', name:'Élévation Scapulaire Contrôlée', mat:'Élastique fort, sous les pieds', sets:'3×10, tempo 4s/3s/5s, repos 60s', desc:'Inchangé — les muscles n\'étaient pas fatigués lors de cet exercice.\n\n1. Debout, élastique dans chaque main, bras le long du corps\n2. Monte les épaules vers les oreilles très lentement (4s)\n3. Maintiens la position haute 3s\n4. Descends encore plus lentement que la montée (5s)', sensation:'Muscle trapèze qui brûle, sensation de "grandir"', erreur:'Aller trop vite — c\'est la lenteur qui renforce', psy:'Je grandis avec contrôle et puissance'},
+  {id:8, moment:'matin', name:'Étirements Finaux — Capsule Postérieure', mat:'Aucun', sets:'2×30s', desc:'Étirements finaux (5 min au total avec ex. suivant).\n\n1. Main droite tire le coude gauche vers l\'épaule droite\n2. Maintiens 30s\n3. Respire profondément pour amplifier', sensation:'Étirement profond arrière épaule', erreur:'Tourner le corps — reste face', psy:'Mon épaule s\'ouvre et se libère'},
+  {id:9, moment:'matin', name:'Étirements Finaux — Pectoraux Porte', mat:'Cadre de porte', sets:'2×45s (15s chaque hauteur)', desc:'Étirements finaux (5 min au total avec ex. précédent).\n\n1. Avant-bras gauche contre le montant, coude à 90°\n2. Avance le pied gauche et penche-toi vers l\'avant\n3. Maintiens 45s — varie la hauteur du coude (haut/moyen/bas)\n\n⚡ Version Potentiation supprimée jours 1-5 — reprise jour 6 si asymptomatique', sensation:'Étirement devant épaule + pectoraux', erreur:'Forcer — laisse la gravité faire', psy:'Ma poitrine s\'ouvre vers la lumière'},
+
+  // ── MIDI ── Genoux : Décompression + Mobilité Douce (18 min)
+  {id:10, moment:'midi', name:'Décompression Patellaire', mat:'Élastique léger, cheville de chaise', sets:'3×10 (10s de maintien), repos 20s', desc:'Inchangée — reste bénéfique pour l\'exostose.\n\n1. Assis au sol, jambe tendue, élastique autour de la cheville\n2. Tire doucement le genou vers toi avec l\'élastique\n3. Maintiens la traction 10s\n4. Relâche progressivement', sensation:'Soulagement, "espace" dans le genou', erreur:'Tirer trop fort — la décompression est douce', psy:'Mon genou respire et se libère'},
+  {id:11, moment:'midi', name:'Étirement Actif Quadriceps (Remplace ISO)', mat:'Élastique très léger', sets:'3×6 cycles (10s tension / 10s relâchement), repos 30s', desc:'Remplace le Quadriceps Isométrique.\n\nPosition de départ : Couché sur le ventre.\n\n1. Élastique tire TRÈS DOUCEMENT le talon vers la fesse\n2. 10s tension douce — 10s relâchement complet\n3. Respire profondément pour relâcher les tensions\n\nSensation correcte : étirement devant cuisse, ZÉRO douleur tendon', sensation:'Étirement devant la cuisse, pas de douleur au tendon patellaire', erreur:'Tirer trop fort — libération progressive uniquement', psy:'Ma cuisse se détend et s\'allonge'},
+  {id:12, moment:'midi', name:'Massage Tendon Patellaire', mat:'Aucun (index et majeur)', sets:'1×2 min, mouvements circulaires doux', desc:'1. Index et majeur posés sur le tendon patellaire\n2. Mouvements circulaires très doux\n3. Zone entre la rotule et le tubercule tibial\n\nBut : Amélioration de la circulation locale', sensation:'Chaleur locale, légère sensibilité OK', erreur:'Appuyer trop fort — rester dans la douceur', psy:'Je prends soin de mon tendon avec bienveillance'},
+  {id:13, moment:'midi', name:'Proprioception Genou — Version Douce', mat:'Élastique léger autour des chevilles', sets:'3×20s (au lieu de 30s), cercles plus petits, repos 30s', desc:'1. Debout sur la jambe droite, genou très légèrement fléchi\n2. Maintiens l\'équilibre pendant que la jambe gauche fait de petits cercles\n3. Le genou droit ne bouge PAS — il stabilise\n\n⚠️ ARRÊT si : douleur tendon patellaire', sensation:'Micro-contractions autour du genou', erreur:'Compenser avec le haut du corps — reste droit', psy:'Mon genou est un pilier stable et précis'},
+
+  // ── SOIR ── Épaule : Force + Stabilité (20 min — intensité normale)
+  {id:14, moment:'soir', name:'Tirage Horizontal Unilatéral', mat:'Élastique fort, fixé à hauteur poitrine', sets:'4×12, tempo 2s/1s/4s, repos 60s', desc:'Muscles reposés le soir — intensité normale.\n\n1. Profil gauche vers l\'ancrage, jambe droite en avant, élastique main gauche\n2. Tire le coude vers l\'arrière en serrant l\'omoplate\n3. La main finit contre les côtes\n4. Résiste au retour pendant 4s', sensation:'Brûlure entre les omoplates + arrière épaule', erreur:'Tirer avec le poignet — c\'est le coude qui guide', psy:'Je ramène la force vers mon centre'},
+  {id:15, moment:'soir', name:'Stabilité Chaotique Épaule', mat:'Élastique léger, tenu à deux mains', sets:'3×45s, repos 45s', desc:'Excellent pour proprioception sans surcharge.\n\n1. Bras gauche tendu à 90° sur le côté\n2. Main droite fait vibrer l\'élastique rapidement\n3. Bras gauche reste PARFAITEMENT immobile malgré les vibrations\n4. Change l\'intensité des secousses', sensation:'Contractions réflexes tout autour de l\'épaule', erreur:'Bouger avec les vibrations — résiste totalement', psy:'Immobile comme un roc dans le chaos'},
+  {id:16, moment:'soir', name:'Push-up Excentrique Contrôlé', mat:'Élastique moyen autour du dos, mains au sol', sets:'3×8, tempo 6s/0s/2s, repos 90s', desc:'Focus contrôle, pas de charge excessive.\n\n1. Planche haute, élastique qui aide à la remontée\n2. Descends très lentement (6s) en contrôlant chaque centimètre\n3. L\'élastique t\'aide à remonter normalement (2s)\n4. Focus sur la phase descente = renforcement excentrique', sensation:'Brûlure dans toute l\'épaule + pectoraux', erreur:'Descendre par à-coups — fluide et contrôlé', psy:'Je contrôle ma descente, je contrôle ma force'},
+];
+
+  let exercises = [];
+  let editingId = null;
+  let selectedMoment = 'matin';
+  let db;
+
+  // ── IndexedDB ──
+  function openDB() {
+    return new Promise((resolve, reject) => {
+      const req = indexedDB.open('exercices-db', 2);
+      req.onupgradeneeded = e => {
+        const d = e.target.result;
+        if (!d.objectStoreNames.contains('data')) d.createObjectStore('data', { keyPath: 'key' });
+      };
+      req.onsuccess = e => resolve(e.target.result);
+      req.onerror   = () => reject();
+    });
+  }
+
+  async function dbGet(key) {
+    return new Promise(resolve => {
+      const tx = db.transaction('data', 'readonly');
+      const req = tx.objectStore('data').get(key);
+      req.onsuccess = () => resolve(req.result ? req.result.value : null);
+      req.onerror   = () => resolve(null);
+    });
+  }
+
+  async function dbSet(key, value) {
+    return new Promise(resolve => {
+      const tx = db.transaction('data', 'readwrite');
+      tx.objectStore('data').put({ key, value });
+      tx.oncomplete = resolve;
+    });
+  }
+
+  async function loadFromDB() {
+    const saved = await dbGet('exercises');
+    if (saved && saved.length > 0) {
+      exercises = saved;
+    } else {
+      // Premier lancement : charger les exercices par défaut
+      exercises = DEFAULT_EXERCISES;
+      await dbSet('exercises', exercises);
+    }
+    render();
+  }
+
+  async function saveToDB() {
+    await dbSet('exercises', exercises);
+    const ind = document.getElementById('saved-indicator');
+    ind.classList.add('active');
+    setTimeout(() => ind.classList.remove('active'), 1500);
+  }
+
+  async function resetToDefault() {
+    if (!confirm('Remplacer tous les exercices par le programme par défaut ?')) return;
+    exercises = DEFAULT_EXERCISES.map(e => ({...e}));
+    await saveToDB();
+    render();
+    showToast('✅ Programme réinitialisé !');
+  }
+
+  // ── MODAL AJOUT ──
+  function selectMoment(m) {
+    selectedMoment = m;
+    ['matin','midi','soir'].forEach(x => {
+      document.getElementById('opt-' + x).className = 'moment-opt' + (x === m ? ' sel-' + x : '');
+    });
+  }
+
+  function openModal(id = null) {
+    editingId = id;
+    const ex = id ? exercises.find(e => e.id === id) : null;
+    document.getElementById('modal-title').textContent = ex ? "Modifier l'exercice" : "Nouvel exercice";
+    document.getElementById('f-name').value      = ex ? ex.name      : '';
+    document.getElementById('f-mat').value       = ex ? (ex.mat||'') : '';
+    document.getElementById('f-sets').value      = ex ? ex.sets      : '';
+    document.getElementById('f-desc').value      = ex ? ex.desc      : '';
+    document.getElementById('f-sensation').value = ex ? (ex.sensation||'') : '';
+    document.getElementById('f-erreur').value    = ex ? (ex.erreur||'')    : '';
+    document.getElementById('f-psy').value       = ex ? (ex.psy||'')       : '';
+    selectMoment(ex ? ex.moment : 'matin');
+    document.getElementById('overlay').classList.add('open');
+    setTimeout(() => document.getElementById('f-name').focus(), 100);
+  }
+
+  function closeModal() {
+    document.getElementById('overlay').classList.remove('open');
+    editingId = null;
+  }
+  function closeBg(e) { if (e.target.id === 'overlay') closeModal(); }
+
+  async function saveEx() {
+    const name = document.getElementById('f-name').value.trim();
+    if (!name) { document.getElementById('f-name').focus(); return; }
+    const data = {
+      name,
+      moment:    selectedMoment,
+      mat:       document.getElementById('f-mat').value.trim(),
+      sets:      document.getElementById('f-sets').value.trim(),
+      desc:      document.getElementById('f-desc').value.trim(),
+      sensation: document.getElementById('f-sensation').value.trim(),
+      erreur:    document.getElementById('f-erreur').value.trim(),
+      psy:       document.getElementById('f-psy').value.trim(),
+    };
+    if (editingId) {
+      const idx = exercises.findIndex(e => e.id === editingId);
+      exercises[idx] = { ...exercises[idx], ...data };
+      showToast('✏️ Modifié et enregistré !');
+    } else {
+      exercises.push({ id: Date.now(), ...data });
+      showToast('✅ Enregistré !');
+    }
+    await saveToDB();
+    render();
+    closeModal();
+  }
+
+  async function deleteEx(id) {
+    exercises = exercises.filter(e => e.id !== id);
+    await saveToDB();
+    render();
+    showToast('🗑️ Supprimé');
+  }
+
+  // ── MODAL DETAIL ──
+  function openDetail(id) {
+    const ex = exercises.find(e => e.id === id);
+    if (!ex) return;
+    const color = ex.moment === 'matin' ? 'var(--matin)' : ex.moment === 'midi' ? 'var(--midi)' : 'var(--soir)';
+    const momentLabel = ex.moment === 'matin' ? '🌅 Matin' : ex.moment === 'midi' ? '☀️ Après-midi' : '🌙 Soir';
+    document.getElementById('detail-modal').innerHTML = `
+      <h2>${esc(ex.name)}</h2>
+      <span class="detail-badge badge-${ex.moment}">${momentLabel}</span>
+      ${ex.mat ? `<div class="detail-section"><div class="detail-label">🎯 Matériel</div><div class="detail-value">${esc(ex.mat)}</div></div>` : ''}
+      ${ex.sets ? `<div class="detail-section"><div class="detail-label">📊 Dosage</div><div class="detail-value highlight">${esc(ex.sets)}</div></div>` : ''}
+      <div class="detail-divider"></div>
+      ${ex.desc ? `<div class="detail-section"><div class="detail-label">📋 Instructions</div><div class="detail-value">${esc(ex.desc)}</div></div>` : ''}
+      ${ex.image ? `<div class="detail-section"><div class="detail-label">🧠 Image mentale</div><div class="detail-value">${esc(ex.image)}</div></div>` : ''}
+      <div class="detail-divider"></div>
+      ${ex.sensation ? `<div class="detail-section"><div class="detail-label">✅ Sensation correcte</div><div class="detail-value">${esc(ex.sensation)}</div></div>` : ''}
+      ${ex.erreur ? `<div class="detail-section"><div class="detail-label">⚠️ Erreur classique</div><div class="detail-value">${esc(ex.erreur)}</div></div>` : ''}
+      ${ex.psy ? `<div class="psy-box">💬 "${esc(ex.psy)}"</div>` : ''}
+      <div class="modal-actions" style="margin-top:1.5rem">
+        <button class="btn-cancel" onclick="closeDetail()">Fermer</button>
+        <button class="btn-ok" onclick="closeDetail();openModal(${ex.id})">Modifier</button>
+      </div>
+    `;
+    document.getElementById('overlay-detail').classList.add('open');
+  }
+
+  function closeDetail() { document.getElementById('overlay-detail').classList.remove('open'); }
+  function closeDetailBg(e) { if (e.target.id === 'overlay-detail') closeDetail(); }
+
+  // ── RENDER ──
+  function render() {
+    ['matin','midi','soir'].forEach(moment => {
+      const list = exercises.filter(e => e.moment === moment);
+      const grid = document.getElementById('grid-' + moment);
+      const countEl = document.getElementById('count-' + moment);
+      countEl.textContent = list.length + ' exercice' + (list.length > 1 ? 's' : '');
+      if (!list.length) {
+        grid.innerHTML = `<div class="empty-section">Aucun exercice — cliquez sur <strong>Ajouter</strong></div>`;
+        return;
+      }
+      grid.innerHTML = list.map((ex, i) => `
+        <div class="card card-${moment}" style="animation-delay:${i*0.05}s" onclick="openDetail(${ex.id})">
+          <div class="card-num">Exercice ${i+1}</div>
+          <div class="card-name">${esc(ex.name)}</div>
+          ${ex.mat ? `<div class="card-mat">🎯 ${esc(ex.mat)}</div>` : ''}
+          ${ex.sets ? `<div class="card-sets sets-${moment}">📊 ${esc(ex.sets)}</div>` : ''}
+          <div class="card-hint">Cliquer pour voir les détails →</div>
+          <div class="card-actions" onclick="event.stopPropagation()">
+            <button class="icon-btn" onclick="openModal(${ex.id})">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              Modifier
+            </button>
+            <button class="icon-btn del" onclick="deleteEx(${ex.id})">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+              Supprimer
+            </button>
+          </div>
+        </div>
+      `).join('');
+    });
+  }
+
+  function esc(s) {
+    return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  let toastTimer;
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove('show'), 2500);
+  }
+
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeModal(); closeDetail(); } });
+
+  openDB().then(database => {
+    db = database;
+    loadFromDB();
+  }).catch(() => {
+    exercises = DEFAULT_EXERCISES;
+    render();
+  });
+</script>
+</body>
+</html>
